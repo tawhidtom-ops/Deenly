@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>উৎপাদনশীল মুসলিম - দৈনিক পরিকল্পনাকারী (Daily Planner)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for Graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts: Hind Siliguri & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        planner: {
+                            bg: '#FAF8F5',
+                            mint: '#D7EAE4',
+                            mintDark: '#B8D8CE',
+                            teal: '#1E564B',
+                            tealLight: '#2A7263',
+                            pink: '#F6DCE0',
+                            pinkBorder: '#E8B8C0',
+                            peach: '#F9E2CE',
+                            peachBorder: '#EBC5A4',
+                            cream: '#F2EFE9',
+                            ink: '#1F2937'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Hind Siliguri"', 'Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #FAF8F5;
+            color: #1F2937;
+            font-family: 'Hind Siliguri', 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Paper dotted underline effect like physical notebook */
+        .notebook-input {
+            background: transparent;
+            border: none;
+            border-bottom: 1.5px dotted #9CA3AF;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+        .notebook-input:focus {
+            outline: none;
+            border-bottom: 2px solid #1E564B;
+            background-color: rgba(215, 234, 228, 0.25);
+        }
+        /* Custom Checkbox Styling */
+        .custom-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 1.35rem;
+            height: 1.35rem;
+            border: 2px solid #1E564B;
+            border-radius: 0.375rem;
+            background-color: #fff;
+            display: inline-grid;
+            place-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            flex-shrink: 0;
+        }
+        .custom-checkbox::before {
+            content: "";
+            width: 0.75rem;
+            height: 0.75rem;
+            transform: scale(0);
+            transition: 120ms transform ease-in-out;
+            box-shadow: inset 1em 1em white;
+            transform-origin: center;
+            clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+        }
+        .custom-checkbox:checked {
+            background-color: #1E564B;
+            border-color: #1E564B;
+        }
+        .custom-checkbox:checked::before {
+            transform: scale(1);
+        }
+        /* Pink priority checkbox */
+        .custom-checkbox-pink {
+            border-color: #9D4C5A;
+        }
+        .custom-checkbox-pink:checked {
+            background-color: #9D4C5A;
+            border-color: #9D4C5A;
+        }
+        /* Scrollbar polish */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F2EFE9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #B8D8CE;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <!-- Top Sticky App Header & Navigation -->
+    <header class="sticky top-0 z-30 bg-[#FAF8F5]/95 backdrop-blur-md border-b border-stone-200 shadow-sm">
+        <div class="max-w-5xl mx-auto px-3 sm:px-6 py-3">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                
+                <!-- Brand Title -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-planner-teal tracking-tight leading-none">
+                            উৎপাদনশীল মুসলিম
+                        </h1>
+                        <p class="text-xs sm:text-sm font-medium text-stone-600 mt-0.5">
+                            দৈনিক পরিকল্পনাকারী • <span class="tracking-wider font-semibold text-planner-teal">DAILY PLANNER</span>
+                        </p>
+                    </div>
+
+                    <!-- Overall Daily Score Badge (Mobile Visible) -->
+                    <div class="sm:hidden flex items-center gap-1.5 bg-planner-mint px-3 py-1.5 rounded-full border border-planner-mintDark">
+                        <span class="text-xs font-semibold text-planner-teal">স্কোর:</span>
+                        <span id="mobileScoreBadge" class="text-sm font-bold text-planner-teal">0%</span>
+                    </div>
+                </div>
+
+                <!-- Main View Switcher Tabs (Daily Planner vs Graphs) -->
+                <div class="flex items-center bg-stone-200/80 p-1 rounded-xl self-start sm:self-auto w-full sm:w-auto">
+                    <button id="tabBtnPlanner" onclick="switchMainTab('planner')" class="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all bg-planner-teal text-white shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                        <span>দৈনিক প্ল্যানার</span>
+                    </button>
+                    <button id="tabBtnGraphs" onclick="switchMainTab('graphs')" class="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all text-stone-700 hover:text-planner-teal">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        <span>গ্রাফ ও রিপোর্ট</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Date Navigation Bar (Every day = Fresh Blank Page) -->
+            <div class="mt-3 pt-2.5 border-t border-stone-200/80 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5 sm:gap-2 flex-1 sm:flex-initial">
+                    <button onclick="changeDateBy(-1)" class="px-2.5 py-1.5 rounded-lg bg-white border border-stone-300 text-stone-700 hover:bg-planner-mint hover:border-planner-teal text-xs sm:text-sm font-semibold transition flex items-center gap-1 shadow-sm" title="আগের দিন">
+                        <span>◀</span> <span class="hidden xs:inline">আগের দিন</span>
+                    </button>
+
+                    <div class="relative flex-1 sm:flex-initial">
+                        <input type="date" id="datePicker" onchange="onDateInputChange(this.value)" class="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-white border-2 border-planner-teal text-planner-teal font-bold text-xs sm:text-sm focus:outline-none shadow-sm cursor-pointer">
+                    </div>
+
+                    <button onclick="changeDateBy(1)" class="px-2.5 py-1.5 rounded-lg bg-white border border-stone-300 text-stone-700 hover:bg-planner-mint hover:border-planner-teal text-xs sm:text-sm font-semibold transition flex items-center gap-1 shadow-sm" title="পরের দিন">
+                        <span class="hidden xs:inline">পরের দিন</span> <span>▶</span>
+                    </button>
+
+                    <span id="bengaliDayBadge" class="px-2.5 py-1.5 rounded-lg bg-planner-mint text-planner-teal font-bold text-xs sm:text-sm border border-planner-mintDark">
+                        বৃহস্পতিবার
+                    </span>
+                </div>
+
+                <!-- Utility Actions: Demo Data for Graphs & Clear Day -->
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                    <div class="hidden sm:flex items-center gap-1.5 bg-planner-mint px-3 py-1 rounded-full border border-planner-mintDark">
+                        <span class="text-xs font-semibold text-planner-teal">আজকের অগ্রগতি:</span>
+                        <span id="desktopScoreBadge" class="text-sm font-bold text-planner-teal">0%</span>
+                    </div>
+
+                    <div class="flex items-center gap-1.5 ml-auto sm:ml-0">
+                        <button onclick="loadSampleWeekData()" class="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-semibold transition shadow-sm" title="গ্রাফ টেস্ট করার জন্য গত ৭ দিনের নমুনা ডাটা লোড করুন">
+                            📊 ডেমো গ্রাফ ডাটা
+                        </button>
+                        <button onclick="openResetModal()" class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold transition" title="এই দিনের পেজটি ফাঁকা করুন">
+                            রিসেট
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Custom Toast Notification -->
+    <div id="toastBox" class="fixed bottom-4 right-4 z-50 hidden bg-planner-teal text-white px-4 py-2.5 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2 transition-all">
+        <span id="toastText">সংরক্ষিত হয়েছে</span>
+    </div>
+
+    <!-- Custom Reset Confirmation Modal (No browser confirm()) -->
+    <div id="resetModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-xl border border-stone-200">
+            <h3 class="text-lg font-bold text-stone-800">এই দিনের পেজ ফাঁকা করবেন?</h3>
+            <p class="text-sm text-stone-600 mt-1">
+                নির্বাচিত তারিখের (<span id="resetModalDate" class="font-semibold text-planner-teal"></span>) সব টিক ও লেখা মুছে নতুন ফাঁকা পেজ হয়ে যাবে।
+            </p>
+            <div class="flex justify-end gap-2 mt-5">
+                <button onclick="closeResetModal()" class="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-sm font-semibold">বাতিল</button>
+                <button onclick="confirmClearCurrentDay()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold">হ্যাঁ, ফাঁকা করুন</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- TAB 1: DAILY PLANNER VIEW (দৈনিক প্ল্যানার)                -->
+    <!-- ========================================================== -->
+    <main id="viewPlanner" class="max-w-5xl mx-auto px-3 sm:px-6 pt-4">
+        
+        <!-- Today's Intention Banner (আজকের নিয়ত) -->
+        <div class="bg-[#F2EFE7] border border-stone-300/80 rounded-2xl p-3.5 sm:p-4 mb-5 shadow-xs">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+                <label for="niyyahInput" class="text-sm sm:text-base font-bold text-planner-teal whitespace-nowrap flex items-center gap-1.5">
+                    <span>✨ আজকের নিয়ত:</span>
+                </label>
+                <input id="niyyahInput" type="text" oninput="updateField('niyyah', this.value)" placeholder="আল্লাহর সন্তুষ্টির জন্য আজকের প্রতিটি কাজ মনোযোগ দিয়ে সম্পন্ন করা..." class="w-full notebook-input py-1 text-sm sm:text-base text-stone-800 placeholder-stone-400 font-medium">
+            </div>
+        </div>
+
+        <!-- 2-Column Notebook Grid on Desktop, Single Column on Mobile -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+            <!-- LEFT COLUMN (Deen & Ibadat, Top Priorities, Personal & Habit Tracker) -->
+            <div class="lg:col-span-6 space-y-5">
+
+                <!-- SECTION 1: দ্বীন ও ইবাদত (Deen & Ibadat + Tahajjud) -->
+                <section class="bg-white rounded-2xl border border-stone-200/90 shadow-xs overflow-hidden">
+                    <div class="bg-planner-mint px-4 py-2.5 border-b border-planner-mintDark flex items-center justify-between">
+                        <h2 class="text-base sm:text-lg font-bold text-planner-teal flex items-center gap-1.5">
+                            <span>🕌 দ্বীন ও ইবাদত</span>
+                        </h2>
+                        <span id="namazProgressBadge" class="text-xs font-bold bg-planner-teal text-white px-2.5 py-1 rounded-full">
+                            ০/৬ ওয়াক্ত
+                        </span>
+                    </div>
+
+                    <div class="p-3.5 sm:p-4">
+                        <!-- 6 Waqt Prayer Table (Includes Tahajjud) -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-stone-200 text-xs font-bold text-stone-600">
+                                        <th class="pb-2 pl-1">নামাজ (Salah)</th>
+                                        <th class="pb-2 text-center">আদায় (✓)</th>
+                                        <th class="pb-2 text-center">জামাত/সময়মতো</th>
+                                        <th class="pb-2 text-center">সুন্নত/নফল</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="salahTableBody" class="divide-y divide-stone-100 text-sm">
+                                    <!-- Dynamically rendered by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Quran, Azkar, Hadith Inputs -->
+                        <div class="mt-4 pt-3 border-t border-stone-200/80 space-y-2.5">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                                <label class="text-xs sm:text-sm font-bold text-stone-700 sm:w-36 shrink-0">📖 কুরআন তিলাওয়াত:</label>
+                                <input id="quranInput" type="text" oninput="updateField('quran', this.value)" placeholder="সূরা / আয়াত বা পৃষ্ঠা নং লিখুন..." class="w-full notebook-input py-1 text-sm text-stone-800">
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                                <label class="text-xs sm:text-sm font-bold text-stone-700 sm:w-36 shrink-0">🤲 আজকার / দোয়া:</label>
+                                <input id="azkarInput" type="text" oninput="updateField('azkar', this.value)" placeholder="সকাল-সন্ধ্যার মাসনুন দোয়া ও ইস্তিগফার..." class="w-full notebook-input py-1 text-sm text-stone-800">
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                                <label class="text-xs sm:text-sm font-bold text-stone-700 sm:w-36 shrink-0">📚 হাদিস / পড়াশোনা:</label>
+                                <input id="hadithInput" type="text" oninput="updateField('hadith', this.value)" placeholder="হাদিস পাঠ বা ইসলামিক বইয়ের অংশ..." class="w-full notebook-input py-1 text-sm text-stone-800">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 2: আজকের প্রধান লক্ষ্য (Top 3 Priorities) -->
+                <section class="bg-[#FDF6F7] rounded-2xl border border-planner-pinkBorder shadow-xs overflow-hidden">
+                    <div class="bg-planner-pink px-4 py-2.5 border-b border-planner-pinkBorder flex items-center justify-between">
+                        <h2 class="text-base sm:text-lg font-bold text-[#7A2E3B]">
+                            🎯 আজকের প্রধান লক্ষ্য (Top 3)
+                        </h2>
+                        <span id="priorityProgressBadge" class="text-xs font-bold bg-[#7A2E3B] text-white px-2.5 py-0.5 rounded-full">
+                            ০/৩
+                        </span>
+                    </div>
+                    <div id="prioritiesContainer" class="p-3.5 sm:p-4 space-y-3">
+                        <!-- Rendered by JS -->
+                    </div>
+                </section>
+
+                <!-- SECTION 3: ব্যক্তিগত ও পরিবার (Personal & Family) -->
+                <section class="bg-white rounded-2xl border border-stone-200/90 shadow-xs overflow-hidden">
+                    <div class="bg-planner-mint px-4 py-2.5 border-b border-planner-mintDark">
+                        <h2 class="text-base sm:text-lg font-bold text-planner-teal">
+                            🏡 ব্যক্তিগত ও পরিবার
+                        </h2>
+                    </div>
+                    <div class="p-3.5 sm:p-4 space-y-2.5">
+                        <div>
+                            <label class="text-xs font-bold text-stone-600 block mb-1">নিজের যত্ন ও পরিবারের সাথে সময় / খোঁজখবর:</label>
+                            <textarea id="familyInput" rows="2" oninput="updateField('familyNotes', this.value)" placeholder="বাবা-মায়ের খোঁজ নেওয়া, পরিবারের কাজ বা নিজের যত্ন..." class="w-full notebook-input py-1 text-sm text-stone-800 resize-none"></textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 4: অভ্যাস ও সুস্থতা ট্র্যাকার (Habit & Wellness Tracker) -->
+                <section class="bg-white rounded-2xl border border-stone-200/90 shadow-xs overflow-hidden">
+                    <div class="bg-planner-mint px-4 py-2.5 border-b border-planner-mintDark flex items-center justify-between">
+                        <h2 class="text-base sm:text-lg font-bold text-planner-teal">
+                            💧 অভ্যাস ও সুস্থতা ট্র্যাকার
+                        </h2>
+                        <span id="waterCountBadge" class="text-xs font-bold bg-sky-700 text-white px-2.5 py-0.5 rounded-full">
+                            ০/৮ গ্লাস পানি
+                        </span>
+                    </div>
+                    <div class="p-3.5 sm:p-4 space-y-4">
+                        <!-- Water Glasses Interactive Row -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-bold text-stone-700">পানি খাওয়ার ট্র্যাকার (গ্লাসে ট্যাপ করুন):</span>
+                                <button onclick="setWaterGlasses(0)" class="text-xs text-stone-500 hover:text-rose-600 underline">রিসেট</button>
+                            </div>
+                            <div id="waterGlassesContainer" class="grid grid-cols-8 gap-1.5 sm:gap-2">
+                                <!-- 8 glasses rendered by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Exercise & Study Checkboxes -->
+                        <div class="pt-2 border-t border-stone-100 space-y-3">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" id="exerciseCheck" onchange="updateHabitCheck('exerciseDone', this.checked)" class="custom-checkbox">
+                                <label for="exerciseCheck" class="text-sm font-bold text-stone-700 w-32 shrink-0 cursor-pointer">ব্যায়াম / হাঁটাহাঁটি:</label>
+                                <input type="text" id="exerciseNote" oninput="updateField('exerciseNote', this.value)" placeholder="কত মিনিট বা কী ব্যায়াম..." class="w-full notebook-input py-1 text-sm">
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" id="studyCheck" onchange="updateHabitCheck('studyDone', this.checked)" class="custom-checkbox">
+                                <label for="studyCheck" class="text-sm font-bold text-stone-700 w-32 shrink-0 cursor-pointer">নতুন কিছু শেখা:</label>
+                                <input type="text" id="studyNote" oninput="updateField('studyNote', this.value)" placeholder="বই পড়া, স্কিল বা কোর্স..." class="w-full notebook-input py-1 text-sm">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- RIGHT COLUMN (Custom To-Do List, Expense Tracker ONLY, End of Day Reflection) -->
+            <div class="lg:col-span-6 space-y-5">
+
+                <!-- SECTION 5: আজকের কাজের তালিকা (User-Defined Dynamic To-Do List) -->
+                <section class="bg-white rounded-2xl border-2 border-planner-mintDark shadow-xs overflow-hidden">
+                    <div class="bg-planner-mint px-4 py-3 border-b border-planner-mintDark flex items-center justify-between">
+                        <div>
+                            <h2 class="text-base sm:text-lg font-bold text-planner-teal flex items-center gap-1.5">
+                                <span>📝 আজকের কাজের তালিকা (To-Do List)</span>
+                            </h2>
+                            <p class="text-xs text-stone-600">আপনি আজ কী কী কাজ করবেন তা নিজে সেট করুন এবং শেষ হলে টিক (✓) দিন</p>
+                        </div>
+                        <span id="todoProgressBadge" class="text-xs font-bold bg-planner-teal text-white px-3 py-1 rounded-full shrink-0">
+                            ০/০ সম্পন্ন
+                        </span>
+                    </div>
+
+                    <div class="p-3.5 sm:p-4">
+                        <!-- Quick Add New Task Bar -->
+                        <div class="flex flex-col sm:flex-row gap-2 mb-4 bg-stone-50 p-2.5 rounded-xl border border-stone-200">
+                            <input id="newTodoTextInput" type="text" onkeydown="if(event.key==='Enter') addNewTodoItem()" placeholder="নতুন কাজ লিখুন (যেমন: অ্যাসাইনমেন্ট শেষ করা, বাজার করা)..." class="flex-1 bg-white px-3 py-2 rounded-lg border border-stone-300 text-sm focus:outline-none focus:border-planner-teal">
+                            <div class="flex gap-2">
+                                <select id="newTodoTagInput" class="bg-white px-2.5 py-2 rounded-lg border border-stone-300 text-xs font-semibold text-stone-700 focus:outline-none focus:border-planner-teal">
+                                    <option value="কাজ">💼 কাজ</option>
+                                    <option value="পড়াশোনা">📚 পড়াশোনা</option>
+                                    <option value="ইবাদত">🕌 ইবাদত</option>
+                                    <option value="ব্যক্তিগত">🏠 ব্যক্তিগত</option>
+                                    <option value="জরুরি">🔥 জরুরি</option>
+                                </select>
+                                <button onclick="addNewTodoItem()" class="px-4 py-2 bg-planner-teal hover:bg-planner-tealLight text-white font-bold text-xs sm:text-sm rounded-lg transition shadow-xs whitespace-nowrap">
+                                    + যোগ করুন
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- To-Do Items List (Pre-populated with blank notebook slots on a new day so user can also type directly) -->
+                        <div id="todoListContainer" class="space-y-2.5">
+                            <!-- Rendered by JS -->
+                        </div>
+
+                        <!-- Add Blank Slot Button -->
+                        <div class="mt-3 pt-2 border-t border-stone-100 flex items-center justify-between">
+                            <button onclick="addBlankTodoRow()" class="text-xs font-bold text-planner-teal hover:underline flex items-center gap-1 py-1">
+                                <span>+ আরেকটি ফাঁকা লাইন যোগ করুন</span>
+                            </button>
+                            <span id="todoPercentText" class="text-xs font-semibold text-stone-500">০% কাজ সম্পন্ন</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 6: হিসাব-নিকাশ — শুধুমাত্র ব্যয়ের হিসাব (Daily Expense Tracker ONLY) -->
+                <section class="bg-[#FFFDF9] rounded-2xl border border-planner-peachBorder shadow-xs overflow-hidden">
+                    <div class="bg-planner-peach px-4 py-2.5 border-b border-planner-peachBorder flex items-center justify-between">
+                        <div>
+                            <h2 class="text-base sm:text-lg font-bold text-[#7C471E]">
+                                💳 হিসাব-নিকাশ (আজকের ব্যয়ের হিসাব)
+                            </h2>
+                        </div>
+                        <span class="text-xs font-bold bg-[#7C471E] text-white px-2.5 py-1 rounded-full">
+                            মোট: <span id="headerTotalExpense">০</span> ৳
+                        </span>
+                    </div>
+
+                    <div class="p-3.5 sm:p-4">
+                        <!-- Expense Table Header (Only Expense Item & Expense Amount as requested) -->
+                        <div class="grid grid-cols-12 gap-2 pb-2 border-b border-planner-peachBorder text-xs font-bold text-[#7C471E]">
+                            <div class="col-span-7 sm:col-span-8 pl-1">ব্যয়ের খাত (কিসে খরচ হলো)</div>
+                            <div class="col-span-4 sm:col-span-3 text-right pr-2">ব্যয় (৳)</div>
+                            <div class="col-span-1"></div>
+                        </div>
+
+                        <!-- Expense Rows -->
+                        <div id="expenseRowsContainer" class="divide-y divide-amber-100/80 my-1">
+                            <!-- Rendered by JS -->
+                        </div>
+
+                        <!-- Add Expense Row & Total Footer -->
+                        <div class="mt-3 pt-3 border-t-2 border-planner-peachBorder flex items-center justify-between">
+                            <button onclick="addExpenseRow()" class="text-xs font-bold text-[#7C471E] hover:underline flex items-center gap-1 bg-planner-peach/60 px-3 py-1.5 rounded-lg">
+                                <span>+ আরও ব্যয়ের ঘর</span>
+                            </button>
+                            <div class="text-right">
+                                <span class="text-xs font-semibold text-stone-600 mr-2">আজকের মোট ব্যয়:</span>
+                                <span id="footerTotalExpense" class="text-base sm:text-lg font-bold text-[#7C471E]">০ ৳</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 7: দিনের শেষে মূল্যায়ন (End of Day Reflection) -->
+                <section class="bg-[#F2F7F5] rounded-2xl border border-planner-mintDark shadow-xs overflow-hidden">
+                    <div class="bg-planner-mint px-4 py-2.5 border-b border-planner-mintDark">
+                        <h2 class="text-base sm:text-lg font-bold text-planner-teal">
+                            🌙 দিনের শেষে মূল্যায়ন
+                        </h2>
+                    </div>
+                    <div class="p-3.5 sm:p-4 space-y-3">
+                        <div>
+                            <label class="text-xs sm:text-sm font-bold text-planner-teal block mb-1">
+                                আজকে আমি যা শিখলাম বা আলহামদুলিল্লাহ (কৃতজ্ঞতা):
+                            </label>
+                            <textarea id="reflectionLearnInput" rows="2" oninput="updateField('reflectionLearn', this.value)" placeholder="আলহামদুলিল্লাহ, আজকের দিনটি যেভাবে কাটলো..." class="w-full notebook-input py-1 text-sm text-stone-800 resize-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="text-xs sm:text-sm font-bold text-planner-teal block mb-1">
+                                আগামীকালের প্রস্তুতি ও তাহাজ্জুদের নিয়ত:
+                            </label>
+                            <textarea id="reflectionTomorrowInput" rows="2" oninput="updateField('reflectionTomorrow', this.value)" placeholder="আগামীকালের সবচেয়ে জরুরি কাজ..." class="w-full notebook-input py-1 text-sm text-stone-800 resize-none"></textarea>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+
+        <!-- Inspirational Footer Quote matching image -->
+        <div class="mt-6 bg-planner-mint/70 border border-planner-mintDark rounded-xl py-3 px-4 text-center">
+            <p class="text-xs sm:text-sm font-bold text-planner-teal">
+                “আজকের দিনটি আল্লাহর দেওয়া একটি উপহার, একে কাজে লাগান।”
+            </p>
+        </div>
+    </main>
+
+    <!-- ========================================================== -->
+    <!-- TAB 2: ANALYTICS & GRAPHS VIEW (নামাজ ও কাজের গ্রাফ ড্যাশবোর্ড) -->
+    <!-- ========================================================== -->
+    <section id="viewGraphs" class="max-w-5xl mx-auto px-3 sm:px-6 pt-5 hidden">
+        
+        <!-- Graph Range Controls -->
+        <div class="bg-white rounded-2xl border border-stone-200 p-4 mb-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+                <h2 class="text-lg sm:text-xl font-bold text-planner-teal">
+                    📈 আপনার নামাজ, টু-ডু লিস্ট ও ব্যয়ের গ্রাফ রিপোর্ট
+                </h2>
+                <p class="text-xs sm:text-sm text-stone-600">
+                    প্রতিদিন প্ল্যানারে টিক দিলে এখানে অটোমেটিক আপনার অগ্রগতির গ্রাফ তৈরি হবে
+                </p>
+            </div>
+
+            <div class="flex items-center gap-2 self-start sm:self-auto">
+                <button id="rangeBtn7" onclick="setGraphRange(7)" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-planner-teal text-white shadow-xs transition">
+                    গত ৭ দিন
+                </button>
+                <button id="rangeBtn30" onclick="setGraphRange(30)" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-stone-100 text-stone-700 hover:bg-planner-mint transition">
+                    গত ৩০ দিন
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary KPI Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-5">
+            <div class="bg-white p-4 rounded-2xl border border-planner-mintDark shadow-xs">
+                <span class="text-xs font-bold text-stone-500">গড় নামাজ আদায়</span>
+                <div id="kpiAvgNamaz" class="text-2xl sm:text-3xl font-bold text-planner-teal mt-1">০.০ / ৬</div>
+                <span class="text-xs text-stone-500">প্রতিদিন গড়ে ওয়াক্ত</span>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-planner-mintDark shadow-xs">
+                <span class="text-xs font-bold text-stone-500">তাহাজ্জুদ আদায়</span>
+                <div id="kpiTahajjudDays" class="text-2xl sm:text-3xl font-bold text-emerald-700 mt-1">০ দিন</div>
+                <span class="text-xs text-stone-500">নির্বাচিত সময়ের মধ্যে</span>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-planner-pinkBorder shadow-xs">
+                <span class="text-xs font-bold text-stone-500">টু-ডু কাজ সম্পন্ন</span>
+                <div id="kpiAvgTodo" class="text-2xl sm:text-3xl font-bold text-[#7A2E3B] mt-1">০%</div>
+                <span class="text-xs text-stone-500">গড় কাজের অগ্রগতি</span>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-planner-peachBorder shadow-xs">
+                <span class="text-xs font-bold text-stone-500">মোট ব্যয় (খরচ)</span>
+                <div id="kpiTotalExpense" class="text-2xl sm:text-3xl font-bold text-[#7C471E] mt-1">০ ৳</div>
+                <span class="text-xs text-stone-500">নির্বাচিত সময়ের মোট</span>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+            
+            <!-- Chart 1: Namaz Bar Chart (5 Farz + Tahajjud) -->
+            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200 shadow-xs">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h3 class="text-base font-bold text-planner-teal">🕌 দৈনিক নামাজ আদায় গ্রাফ (০-৬ ওয়াক্ত)</h3>
+                        <p class="text-xs text-stone-500">৫ ওয়াক্ত ফরজ ও তাহাজ্জুদ নামাজের দৈনিক হিসাব</p>
+                    </div>
+                </div>
+                <div class="h-64 sm:h-72 relative">
+                    <canvas id="namazChartCanvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 2: To-Do List Completion % vs Namaz % Line Chart -->
+            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200 shadow-xs">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h3 class="text-base font-bold text-planner-teal">✅ নামাজ (%) ও টু-ডু লিস্ট কাজ সম্পন্ন (%) গ্রাফ</h3>
+                        <p class="text-xs text-stone-500">আপনার প্রতিদিনের সেট করা কাজের কত শতাংশ শেষ হয়েছে</p>
+                    </div>
+                </div>
+                <div class="h-64 sm:h-72 relative">
+                    <canvas id="todoChartCanvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 3: Daily Expense Chart -->
+            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200 shadow-xs lg:col-span-2">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h3 class="text-base font-bold text-[#7C471E]">💳 দৈনিক ব্যয়ের গ্রাফ (টাকা ৳)</h3>
+                        <p class="text-xs text-stone-500">কোন দিন কত টাকা খরচ হয়েছে তার তুলনামূলক চিত্র</p>
+                    </div>
+                </div>
+                <div class="h-56 sm:h-64 relative">
+                    <canvas id="expenseChartCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick History Log Table (Click any date row to jump to that day's planner) -->
+        <div class="bg-white rounded-2xl border border-stone-200 shadow-xs overflow-hidden">
+            <div class="bg-planner-mint px-4 py-3 border-b border-planner-mintDark flex items-center justify-between">
+                <h3 class="text-sm sm:text-base font-bold text-planner-teal">
+                    📅 দিনের তালিকা (যেকোনো তারিখে ক্লিক করে সেই দিনের পেজে যান)
+                </h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                    <thead>
+                        <tr class="bg-stone-50 border-b border-stone-200 text-stone-600 font-bold">
+                            <th class="py-2.5 px-3">তারিখ ও বার</th>
+                            <th class="py-2.5 px-3 text-center">নামাজ (৬ ওয়াক্ত)</th>
+                            <th class="py-2.5 px-3 text-center">তাহাজ্জুদ</th>
+                            <th class="py-2.5 px-3 text-center">টু-ডু কাজ</th>
+                            <th class="py-2.5 px-3 text-right">মোট ব্যয় (৳)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyLogTableBody" class="divide-y divide-stone-100">
+                        <!-- Rendered by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </section>
+
+    <script>
+        // ============================================================================
+        // CONSTANTS & STATE MANAGEMENT
+        // ============================================================================
+        const STORAGE_PREFIX = 'pm_daily_planner_v1_';
+        
+        const PRAYERS_CONFIG = [
+            { id: 'fajr', name: 'ফজর (Fajr)', isTahajjud: false },
+            { id: 'dhuhr', name: 'যোহর (Dhuhr)', isTahajjud: false },
+            { id: 'asr', name: 'আসর (Asr)', isTahajjud: false },
+            { id: 'maghrib', name: 'মাগরিব (Maghrib)', isTahajjud: false },
+            { id: 'isha', name: 'এশা (Isha)', isTahajjud: false },
+            { id: 'tahajjud', name: 'তাহাজ্জুদ (Tahajjud) ✨', isTahajjud: true }
+        ];
+
+        const BENGALI_DAYS = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
+        const BENGALI_DIGITS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+
+        // Default to today's date
+        let currentDateStr = getTodayISO();
+        let currentDayData = null;
+        let currentGraphRange = 7;
+
+        // Chart.js instances
+        let namazChartInstance = null;
+        let todoChartInstance = null;
+        let expenseChartInstance = null;
+
+        // Helper: Convert English digits to Bengali digits for display
+        function toBn(num) {
+            return String(num).replace(/\d/g, d => BENGALI_DIGITS[d]);
+        }
+
+        function getTodayISO() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Create a completely fresh blank daily planner template for any new date
+        function createBlankDayData() {
+            const prayers = {};
+            PRAYERS_CONFIG.forEach(p => {
+                prayers[p.id] = { done: false, jamat: false, sunnah: false };
+            });
+
+            return {
+                niyyah: '',
+                prayers: prayers,
+                quran: '',
+                azkar: '',
+                hadith: '',
+                priorities: [
+                    { text: '', done: false },
+                    { text: '', done: false },
+                    { text: '', done: false }
+                ],
+                // 6 clean blank slots by default so user can immediately write their own tasks
+                todos: [
+                    { id: Date.now() + 1, text: '', tag: 'কাজ', done: false },
+                    { id: Date.now() + 2, text: '', tag: 'পড়াশোনা', done: false },
+                    { id: Date.now() + 3, text: '', tag: 'ইবাদত', done: false },
+                    { id: Date.now() + 4, text: '', tag: 'ব্যক্তিগত', done: false },
+                    { id: Date.now() + 5, text: '', tag: 'কাজ', done: false }
+                ],
+                familyNotes: '',
+                waterGlasses: 0,
+                exerciseDone: false,
+                exerciseNote: '',
+                studyDone: false,
+                studyNote: '',
+                // Only Expense Items & Amount (No Income columns)
+                expenses: [
+                    { id: Date.now() + 11, item: '', amount: '' },
+                    { id: Date.now() + 12, item: '', amount: '' },
+                    { id: Date.now() + 13, item: '', amount: '' },
+                    { id: Date.now() + 14, item: '', amount: '' }
+                ],
+                reflectionLearn: '',
+                reflectionTomorrow: ''
+            };
+        }
+
+        // Load data for a specific date from localStorage (or return fresh blank template)
+        function loadDayData(dateStr) {
+            try {
+                const raw = localStorage.getItem(STORAGE_PREFIX + dateStr);
+                if (!raw) return createBlankDayData();
+                const parsed = JSON.parse(raw);
+                const blank = createBlankDayData();
+                // Merge safely to ensure all keys exist
+                return {
+                    ...blank,
+                    ...parsed,
+                    prayers: { ...blank.prayers, ...(parsed.prayers || {}) },
+                    priorities: Array.isArray(parsed.priorities) && parsed.priorities.length === 3 ? parsed.priorities : blank.priorities,
+                    todos: Array.isArray(parsed.todos) ? parsed.todos : blank.todos,
+                    expenses: Array.isArray(parsed.expenses) ? parsed.expenses : blank.expenses
+                };
+            } catch (e) {
+                console.error('Error loading day data:', e);
+                return createBlankDayData();
+            }
+        }
+
+        function saveCurrentDayData() {
+            try {
+                localStorage.setItem(STORAGE_PREFIX + currentDateStr, JSON.stringify(currentDayData));
+                updateProgressBadges();
+            } catch (e) {
+                console.error('Error saving day data:', e);
+            }
+        }
+
+        function showToast(msg) {
+            const box = document.getElementById('toastBox');
+            const text = document.getElementById('toastText');
+            text.textContent = msg;
+            box.classList.remove('hidden');
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => {
+                box.classList.add('hidden');
+            }, 2200);
+        }
+
+        // ============================================================================
+        // DATE NAVIGATION & RENDERING
+        // ============================================================================
+        function setDate(dateStr) {
+            currentDateStr = dateStr;
+            document.getElementById('datePicker').value = currentDateStr;
+
+            // Update Bengali Day of the Week
+            const [y, m, d] = currentDateStr.split('-').map(Number);
+            const dateObj = new Date(y, m - 1, d);
+            const dayName = BENGALI_DAYS[dateObj.getDay()];
+            document.getElementById('bengaliDayBadge').textContent = dayName;
+
+            currentDayData = loadDayData(currentDateStr);
+            renderFullPlannerPage();
+            
+            // If currently on Graphs tab, refresh graphs ending on this date
+            if (!document.getElementById('viewGraphs').classList.contains('hidden')) {
+                renderAnalyticsAndGraphs();
+            }
+        }
+
+        function onDateInputChange(val) {
+            if (!val) return;
+            setDate(val);
+        }
+
+        function changeDateBy(offsetDays) {
+            const [y, m, d] = currentDateStr.split('-').map(Number);
+            const dt = new Date(y, m - 1, d);
+            dt.setDate(dt.getDate() + offsetDays);
+            const ny = dt.getFullYear();
+            const nm = String(dt.getMonth() + 1).padStart(2, '0');
+            const nd = String(dt.getDate()).padStart(2, '0');
+            setDate(`${ny}-${nm}-${nd}`);
+        }
+
+        // ============================================================================
+        // RENDER DAILY PLANNER SECTIONS
+        // ============================================================================
+        function renderFullPlannerPage() {
+            // Simple text fields
+            document.getElementById('niyyahInput').value = currentDayData.niyyah || '';
+            document.getElementById('quranInput').value = currentDayData.quran || '';
+            document.getElementById('azkarInput').value = currentDayData.azkar || '';
+            document.getElementById('hadithInput').value = currentDayData.hadith || '';
+            document.getElementById('familyInput').value = currentDayData.familyNotes || '';
+            document.getElementById('exerciseCheck').checked = !!currentDayData.exerciseDone;
+            document.getElementById('exerciseNote').value = currentDayData.exerciseNote || '';
+            document.getElementById('studyCheck').checked = !!currentDayData.studyDone;
+            document.getElementById('studyNote').value = currentDayData.studyNote || '';
+            document.getElementById('reflectionLearnInput').value = currentDayData.reflectionLearn || '';
+            document.getElementById('reflectionTomorrowInput').value = currentDayData.reflectionTomorrow || '';
+
+            renderSalahTable();
+            renderPriorities();
+            renderWaterGlasses();
+            renderTodoList();
+            renderExpenses();
+            updateProgressBadges();
+        }
+
+        // 1. Render 6 Prayers Table (Fajr - Isha + Tahajjud)
+        function renderSalahTable() {
+            const tbody = document.getElementById('salahTableBody');
+            tbody.innerHTML = '';
+
+            PRAYERS_CONFIG.forEach(p => {
+                const state = currentDayData.prayers[p.id] || { done: false, jamat: false, sunnah: false };
+                const tr = document.createElement('tr');
+                tr.className = p.isTahajjud 
+                    ? 'bg-emerald-50/90 font-semibold text-planner-teal' 
+                    : 'hover:bg-stone-50/80 transition';
+
+                tr.innerHTML = `
+                    <td class="py-2.5 pl-1.5 font-bold ${p.isTahajjud ? 'text-planner-teal' : 'text-stone-800'}">
+                        ${p.name}
+                    </td>
+                    <td class="py-2.5 text-center">
+                        <input type="checkbox" ${state.done ? 'checked' : ''} 
+                            onchange="togglePrayer('${p.id}', 'done', this.checked)"
+                            class="custom-checkbox mx-auto" title="${p.name} আদায়">
+                    </td>
+                    <td class="py-2.5 text-center">
+                        <input type="checkbox" ${state.jamat ? 'checked' : ''} 
+                            onchange="togglePrayer('${p.id}', 'jamat', this.checked)"
+                            class="custom-checkbox mx-auto" title="জামাত বা সময়মতো">
+                    </td>
+                    <td class="py-2.5 text-center">
+                        <input type="checkbox" ${state.sunnah ? 'checked' : ''} 
+                            onchange="togglePrayer('${p.id}', 'sunnah', this.checked)"
+                            class="custom-checkbox mx-auto" title="সুন্নত বা নফল">
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function togglePrayer(prayerId, field, checked) {
+            if (!currentDayData.prayers[prayerId]) {
+                currentDayData.prayers[prayerId] = { done: false, jamat: false, sunnah: false };
+            }
+            currentDayData.prayers[prayerId][field] = checked;
+            // If user checks Jamat, automatically mark prayer as done
+            if (field === 'jamat' && checked) {
+                currentDayData.prayers[prayerId].done = true;
+                renderSalahTable();
+            }
+            saveCurrentDayData();
+        }
+
+        // 2. Render Top 3 Priorities
+        function renderPriorities() {
+            const container = document.getElementById('prioritiesContainer');
+            container.innerHTML = '';
+
+            currentDayData.priorities.forEach((item, idx) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center gap-2.5';
+                row.innerHTML = `
+                    <input type="checkbox" ${item.done ? 'checked' : ''} 
+                        onchange="togglePriority(${idx}, this.checked)"
+                        class="custom-checkbox custom-checkbox-pink">
+                    <span class="text-xs font-bold text-[#7A2E3B] w-4">${toBn(idx + 1)}.</span>
+                    <input type="text" value="${escapeHtml(item.text)}" 
+                        oninput="updatePriorityText(${idx}, this.value)"
+                        placeholder="আজকের প্রধান লক্ষ্য ${toBn(idx + 1)} লিখুন..."
+                        class="w-full notebook-input py-1 text-sm ${item.done ? 'line-through text-stone-400' : 'text-stone-800 font-medium'}">
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function togglePriority(idx, checked) {
+            currentDayData.priorities[idx].done = checked;
+            renderPriorities();
+            saveCurrentDayData();
+        }
+
+        function updatePriorityText(idx, val) {
+            currentDayData.priorities[idx].text = val;
+            saveCurrentDayData();
+        }
+
+        // 3. Render Water Intake Tracker (8 Glasses)
+        function renderWaterGlasses() {
+            const container = document.getElementById('waterGlassesContainer');
+            container.innerHTML = '';
+            const count = currentDayData.waterGlasses || 0;
+
+            for (let i = 1; i <= 8; i++) {
+                const filled = i <= count;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.onclick = () => setWaterGlasses(i === count ? i - 1 : i);
+                btn.className = `flex flex-col items-center justify-center py-2 rounded-xl border transition-all ${
+                    filled 
+                        ? 'bg-sky-100 border-sky-400 text-sky-800 shadow-2xs scale-105' 
+                        : 'bg-stone-50 border-stone-200 text-stone-400 hover:bg-sky-50'
+                }`;
+                btn.innerHTML = `
+                    <svg class="w-5 h-5 ${filled ? 'text-sky-600 fill-sky-400/60' : 'text-stone-400'}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 4h12l-1.5 15a2 2 0 01-2 1.8H9.5a2 2 0 01-2-1.8L6 4z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.5 9h11" />
+                    </svg>
+                    <span class="text-[11px] font-bold mt-0.5">${toBn(i)}</span>
+                `;
+                container.appendChild(btn);
+            }
+            document.getElementById('waterCountBadge').textContent = `${toBn(count)}/৮ গ্লাস পানি`;
+        }
+
+        function setWaterGlasses(num) {
+            currentDayData.waterGlasses = num;
+            renderWaterGlasses();
+            saveCurrentDayData();
+        }
+
+        // 4. Render Dynamic User-Defined To-Do List
+        function renderTodoList() {
+            const container = document.getElementById('todoListContainer');
+            container.innerHTML = '';
+
+            if (currentDayData.todos.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-6 text-stone-400 text-sm">
+                        কোনো কাজ যোগ করা হয়নি। উপরে নতুন কাজ লিখে "+ যোগ করুন" বাটনে চাপুন।
+                    </div>
+                `;
+                return;
+            }
+
+            currentDayData.todos.forEach((todo, index) => {
+                const row = document.createElement('div');
+                row.className = `flex items-center gap-2.5 p-2 rounded-xl border transition ${
+                    todo.done ? 'bg-emerald-50/50 border-emerald-200/80' : 'bg-white border-stone-200/80 hover:border-planner-mintDark'
+                }`;
+
+                row.innerHTML = `
+                    <input type="checkbox" ${todo.done ? 'checked' : ''} 
+                        onchange="toggleTodoItem(${index}, this.checked)"
+                        class="custom-checkbox">
+                    
+                    <input type="text" value="${escapeHtml(todo.text)}"
+                        oninput="updateTodoText(${index}, this.value)"
+                        placeholder="কাজ ${toBn(index + 1)}: এখানে আপনার কাজ লিখুন..."
+                        class="flex-1 notebook-input py-1 text-sm ${todo.done ? 'line-through text-stone-400' : 'text-stone-800 font-medium'}">
+
+                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-planner-mint/70 text-planner-teal shrink-0">
+                        ${escapeHtml(todo.tag || 'কাজ')}
+                    </span>
+
+                    <button onclick="deleteTodoItem(${index})" class="text-stone-400 hover:text-rose-600 p-1 rounded-lg transition" title="মুছে ফেলুন">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function addNewTodoItem() {
+            const input = document.getElementById('newTodoTextInput');
+            const tagSelect = document.getElementById('newTodoTagInput');
+            const text = input.value.trim();
+            if (!text) {
+                input.focus();
+                return;
+            }
+
+            // If there's an empty blank slot at the top, fill it first; otherwise push new
+            const emptySlotIndex = currentDayData.todos.findIndex(t => !t.text.trim() && !t.done);
+            if (emptySlotIndex !== -1) {
+                currentDayData.todos[emptySlotIndex].text = text;
+                currentDayData.todos[emptySlotIndex].tag = tagSelect.value;
+            } else {
+                currentDayData.todos.push({
+                    id: Date.now(),
+                    text: text,
+                    tag: tagSelect.value,
+                    done: false
+                });
+            }
+
+            input.value = '';
+            renderTodoList();
+            saveCurrentDayData();
+        }
+
+        function addBlankTodoRow() {
+            currentDayData.todos.push({
+                id: Date.now(),
+                text: '',
+                tag: 'কাজ',
+                done: false
+            });
+            renderTodoList();
+            saveCurrentDayData();
+        }
+
+        function toggleTodoItem(index, checked) {
+            currentDayData.todos[index].done = checked;
+            renderTodoList();
+            saveCurrentDayData();
+        }
+
+        function updateTodoText(index, val) {
+            currentDayData.todos[index].text = val;
+            saveCurrentDayData();
+        }
+
+        function deleteTodoItem(index) {
+            currentDayData.todos.splice(index, 1);
+            renderTodoList();
+            saveCurrentDayData();
+        }
+
+        // 5. Render Daily Expense Tracker (ONLY Expense Item & Amount)
+        function renderExpenses() {
+            const container = document.getElementById('expenseRowsContainer');
+            container.innerHTML = '';
+
+            currentDayData.expenses.forEach((exp, idx) => {
+                const row = document.createElement('div');
+                row.className = 'grid grid-cols-12 gap-2 items-center py-1.5';
+                row.innerHTML = `
+                    <div class="col-span-7 sm:col-span-8">
+                        <input type="text" value="${escapeHtml(exp.item)}"
+                            oninput="updateExpenseItem(${idx}, 'item', this.value)"
+                            placeholder="ব্যয়ের খাত ${toBn(idx + 1)} (যেমন: যাতায়াত, খাবার)..."
+                            class="w-full notebook-input py-1 text-sm text-stone-800">
+                    </div>
+                    <div class="col-span-4 sm:col-span-3">
+                        <input type="number" min="0" step="any" value="${exp.amount}"
+                            oninput="updateExpenseItem(${idx}, 'amount', this.value)"
+                            placeholder="০"
+                            class="w-full notebook-input py-1 text-sm text-right font-bold text-[#7C471E]">
+                    </div>
+                    <div class="col-span-1 text-right">
+                        <button onclick="deleteExpenseRow(${idx})" class="text-stone-400 hover:text-rose-600 p-1" title="মুছুন">
+                            ×
+                        </button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+
+            calculateTotalExpense();
+        }
+
+        function updateExpenseItem(idx, field, val) {
+            currentDayData.expenses[idx][field] = val;
+            calculateTotalExpense();
+            saveCurrentDayData();
+        }
+
+        function addExpenseRow() {
+            currentDayData.expenses.push({ id: Date.now(), item: '', amount: '' });
+            renderExpenses();
+            saveCurrentDayData();
+        }
+
+        function deleteExpenseRow(idx) {
+            if (currentDayData.expenses.length <= 1) {
+                currentDayData.expenses[0] = { id: Date.now(), item: '', amount: '' };
+            } else {
+                currentDayData.expenses.splice(idx, 1);
+            }
+            renderExpenses();
+            saveCurrentDayData();
+        }
+
+        function calculateTotalExpense() {
+            const total = currentDayData.expenses.reduce((sum, item) => {
+                const num = parseFloat(item.amount);
+                return sum + (isNaN(num) ? 0 : num);
+            }, 0);
+            const formatted = toBn(total.toLocaleString('en-IN'));
+            document.getElementById('headerTotalExpense').textContent = formatted;
+            document.getElementById('footerTotalExpense').textContent = `${formatted} ৳`;
+            return total;
+        }
+
+        // Generic field updater
+        function updateField(key, val) {
+            currentDayData[key] = val;
+            saveCurrentDayData();
+        }
+
+        function updateHabitCheck(key, checked) {
+            currentDayData[key] = checked;
+            saveCurrentDayData();
+        }
+
+        // ============================================================================
+        // PROGRESS BADGES & DAILY SCORE CALCULATION
+        // ============================================================================
+        function getDaySummaryMetrics(dayData) {
+            // 1. Namaz metrics (out of 6 including Tahajjud)
+            let farzCount = 0;
+            let tahajjudDone = 0;
+            PRAYERS_CONFIG.forEach(p => {
+                if (dayData.prayers && dayData.prayers[p.id] && dayData.prayers[p.id].done) {
+                    if (p.isTahajjud) tahajjudDone = 1;
+                    else farzCount++;
+                }
+            });
+            const totalNamaz = farzCount + tahajjudDone;
+            const namazPercent = Math.round((totalNamaz / 6) * 100);
+
+            // 2. To-Do metrics (Count active todos that either have text OR are checked)
+            const activeTodos = (dayData.todos || []).filter(t => t.text.trim() !== '' || t.done);
+            const completedTodos = activeTodos.filter(t => t.done).length;
+            const totalTodos = activeTodos.length;
+            const todoPercent = totalTodos > 0 ? Math.round((completedTodos / totalTodos) * 100) : 0;
+
+            // 3. Priorities metrics
+            const completedPriorities = (dayData.priorities || []).filter(p => p.done).length;
+
+            // 4. Total Expense
+            const totalExpense = (dayData.expenses || []).reduce((sum, item) => {
+                const num = parseFloat(item.amount);
+                return sum + (isNaN(num) ? 0 : num);
+            }, 0);
+
+            // 5. Overall Daily Score (Namaz 50%, Todo 30%, Priorities/Habits 20%)
+            const habitPoints = (dayData.waterGlasses >= 6 ? 1 : 0) + (dayData.exerciseDone ? 1 : 0) + (dayData.studyDone ? 1 : 0);
+            const overallScore = Math.round(
+                (totalNamaz / 6) * 50 +
+                (totalTodos > 0 ? (completedTodos / totalTodos) * 30 : 0) +
+                ((completedPriorities + habitPoints) / 6) * 20
+            );
+
+            return {
+                farzCount,
+                tahajjudDone,
+                totalNamaz,
+                namazPercent,
+                completedTodos,
+                totalTodos,
+                todoPercent,
+                completedPriorities,
+                totalExpense,
+                overallScore
+            };
+        }
+
+        function updateProgressBadges() {
+            const m = getDaySummaryMetrics(currentDayData);
+
+            document.getElementById('namazProgressBadge').textContent = `${toBn(m.totalNamaz)}/৬ ওয়াক্ত (${toBn(m.namazPercent)}%)`;
+            document.getElementById('priorityProgressBadge').textContent = `${toBn(m.completedPriorities)}/৩`;
+            document.getElementById('todoProgressBadge').textContent = `${toBn(m.completedTodos)}/${toBn(m.totalTodos)} সম্পন্ন`;
+            document.getElementById('todoPercentText').textContent = `${toBn(m.todoPercent)}% কাজ সম্পন্ন`;
+
+            document.getElementById('mobileScoreBadge').textContent = `${toBn(m.overallScore)}%`;
+            document.getElementById('desktopScoreBadge').textContent = `${toBn(m.overallScore)}%`;
+        }
+
+        // ============================================================================
+        // TAB SWITCHING & CHARTS / ANALYTICS (Chart.js)
+        // ============================================================================
+        function switchMainTab(tab) {
+            const plannerView = document.getElementById('viewPlanner');
+            const graphsView = document.getElementById('viewGraphs');
+            const btnPlanner = document.getElementById('tabBtnPlanner');
+            const btnGraphs = document.getElementById('tabBtnGraphs');
+
+            if (tab === 'planner') {
+                plannerView.classList.remove('hidden');
+                graphsView.classList.add('hidden');
+                btnPlanner.className = 'flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all bg-planner-teal text-white shadow-sm';
+                btnGraphs.className = 'flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all text-stone-700 hover:text-planner-teal';
+            } else {
+                plannerView.classList.add('hidden');
+                graphsView.classList.remove('hidden');
+                btnGraphs.className = 'flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all bg-planner-teal text-white shadow-sm';
+                btnPlanner.className = 'flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all text-stone-700 hover:text-planner-teal';
+                renderAnalyticsAndGraphs();
+            }
+        }
+
+        function setGraphRange(days) {
+            currentGraphRange = days;
+            const btn7 = document.getElementById('rangeBtn7');
+            const btn30 = document.getElementById('rangeBtn30');
+            if (days === 7) {
+                btn7.className = 'px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-planner-teal text-white shadow-xs transition';
+                btn30.className = 'px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-stone-100 text-stone-700 hover:bg-planner-mint transition';
+            } else {
+                btn30.className = 'px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-planner-teal text-white shadow-xs transition';
+                btn7.className = 'px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-stone-100 text-stone-700 hover:bg-planner-mint transition';
+            }
+            renderAnalyticsAndGraphs();
+        }
+
+        function renderAnalyticsAndGraphs() {
+            const [y, m, d] = currentDateStr.split('-').map(Number);
+            const endDate = new Date(y, m - 1, d);
+
+            const labels = [];
+            const farzSeries = [];
+            const tahajjudSeries = [];
+            const namazPercentSeries = [];
+            const todoPercentSeries = [];
+            const expenseSeries = [];
+            const historyRows = [];
+
+            let sumNamaz = 0;
+            let totalTahajjudDays = 0;
+            let sumTodoPercent = 0;
+            let activeDaysCount = 0;
+            let grandTotalExpense = 0;
+
+            for (let i = currentGraphRange - 1; i >= 0; i--) {
+                const dt = new Date(endDate);
+                dt.setDate(dt.getDate() - i);
+                const iso = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+                const shortLabel = `${toBn(dt.getDate())}/${toBn(dt.getMonth() + 1)}`;
+                const dayName = BENGALI_DAYS[dt.getDay()];
+
+                const dayData = loadDayData(iso);
+                const metrics = getDaySummaryMetrics(dayData);
+
+                labels.push(shortLabel);
+                farzSeries.push(metrics.farzCount);
+                tahajjudSeries.push(metrics.tahajjudDone);
+                namazPercentSeries.push(metrics.namazPercent);
+                todoPercentSeries.push(metrics.todoPercent);
+                expenseSeries.push(metrics.totalExpense);
+
+                if (metrics.totalNamaz > 0 || metrics.totalTodos > 0 || metrics.totalExpense > 0) {
+                    activeDaysCount++;
+                    sumNamaz += metrics.totalNamaz;
+                    sumTodoPercent += metrics.todoPercent;
+                }
+                if (metrics.tahajjudDone > 0) totalTahajjudDays++;
+                grandTotalExpense += metrics.totalExpense;
+
+                historyRows.push({
+                    iso,
+                    displayDate: `${toBn(dt.getDate())}/${toBn(dt.getMonth() + 1)}/${toBn(dt.getFullYear())} (${dayName})`,
+                    metrics
+                });
+            }
+
+            // Update KPI Cards
+            const divisor = activeDaysCount > 0 ? activeDaysCount : 1;
+            const avgNamaz = (sumNamaz / divisor).toFixed(1);
+            const avgTodo = Math.round(sumTodoPercent / divisor);
+
+            document.getElementById('kpiAvgNamaz').textContent = `${toBn(avgNamaz)} / ৬`;
+            document.getElementById('kpiTahajjudDays').textContent = `${toBn(totalTahajjudDays)} দিন`;
+            document.getElementById('kpiAvgTodo').textContent = `${toBn(avgTodo)}%`;
+            document.getElementById('kpiTotalExpense').textContent = `${toBn(grandTotalExpense.toLocaleString('en-IN'))} ৳`;
+
+            // Render Chart 1: Stacked Bar Chart (5 Farz + Tahajjud = 6 Waqt)
+            const ctxNamaz = document.getElementById('namazChartCanvas').getContext('2d');
+            if (namazChartInstance) namazChartInstance.destroy();
+            namazChartInstance = new Chart(ctxNamaz, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '৫ ওয়াক্ত ফরজ নামাজ',
+                            data: farzSeries,
+                            backgroundColor: '#1E564B',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'তাহাজ্জুদ নামাজ ✨',
+                            data: tahajjudSeries,
+                            backgroundColor: '#34D399',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true },
+                        y: {
+                            stacked: true,
+                            min: 0,
+                            max: 6,
+                            ticks: { stepSize: 1 }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'top' }
+                    }
+                }
+            });
+
+            // Render Chart 2: To-Do Completion % vs Namaz % Line Chart
+            const ctxTodo = document.getElementById('todoChartCanvas').getContext('2d');
+            if (todoChartInstance) todoChartInstance.destroy();
+            todoChartInstance = new Chart(ctxTodo, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'টু-ডু কাজ সম্পন্ন (%)',
+                            data: todoPercentSeries,
+                            borderColor: '#9D4C5A',
+                            backgroundColor: 'rgba(157, 76, 90, 0.15)',
+                            borderWidth: 2.5,
+                            tension: 0.3,
+                            fill: true,
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'নামাজ আদায় (%)',
+                            data: namazPercentSeries,
+                            borderColor: '#1E564B',
+                            backgroundColor: 'rgba(30, 86, 75, 0.08)',
+                            borderWidth: 2,
+                            borderDash: [4, 4],
+                            tension: 0.3,
+                            fill: false,
+                            pointRadius: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100,
+                            ticks: { callback: val => val + '%' }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'top' }
+                    }
+                }
+            });
+
+            // Render Chart 3: Daily Expense Bar Chart
+            const ctxExp = document.getElementById('expenseChartCanvas').getContext('2d');
+            if (expenseChartInstance) expenseChartInstance.destroy();
+            expenseChartInstance = new Chart(ctxExp, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'দৈনিক ব্যয় (৳)',
+                            data: expenseSeries,
+                            backgroundColor: '#D97706',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            // Populate History Log Table (Newest first)
+            const logBody = document.getElementById('historyLogTableBody');
+            logBody.innerHTML = '';
+            historyRows.reverse().forEach(row => {
+                const tr = document.createElement('tr');
+                const isSelected = row.iso === currentDateStr;
+                tr.className = `cursor-pointer transition ${isSelected ? 'bg-planner-mint/50 font-bold' : 'hover:bg-stone-50'}`;
+                tr.onclick = () => {
+                    setDate(row.iso);
+                    switchMainTab('planner');
+                };
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 text-planner-teal underline">${row.displayDate}</td>
+                    <td class="py-2.5 px-3 text-center">${toBn(row.metrics.totalNamaz)} / ৬</td>
+                    <td class="py-2.5 px-3 text-center">${row.metrics.tahajjudDone ? '<span class="text-emerald-700 font-bold">✓ আদায়</span>' : '<span class="text-stone-400">-</span>'}</td>
+                    <td class="py-2.5 px-3 text-center">${toBn(row.metrics.completedTodos)}/${toBn(row.metrics.totalTodos)} (${toBn(row.metrics.todoPercent)}%)</td>
+                    <td class="py-2.5 px-3 text-right font-semibold text-[#7C471E]">${toBn(row.metrics.totalExpense)} ৳</td>
+                `;
+                logBody.appendChild(tr);
+            });
+        }
+
+        // ============================================================================
+        // DEMO DATA LOADER & RESET MODAL
+        // ============================================================================
+        function loadSampleWeekData() {
+            const [y, m, d] = currentDateStr.split('-').map(Number);
+            const baseDate = new Date(y, m - 1, d);
+
+            const sampleProfiles = [
+                { farz: 5, tahajjud: true, todosDone: 4, todosTotal: 5, exp: 220, water: 7 },
+                { farz: 4, tahajjud: false, todosDone: 3, todosTotal: 5, exp: 150, water: 6 },
+                { farz: 5, tahajjud: true, todosDone: 5, todosTotal: 5, exp: 310, water: 8 },
+                { farz: 5, tahajjud: false, todosDone: 2, todosTotal: 4, exp: 120, water: 5 },
+                { farz: 4, tahajjud: true, todosDone: 4, todosTotal: 5, exp: 180, water: 7 },
+                { farz: 5, tahajjud: true, todosDone: 5, todosTotal: 6, exp: 400, water: 8 },
+                { farz: 5, tahajjud: true, todosDone: 4, todosTotal: 5, exp: 260, water: 7 }
+            ];
+
+            for (let i = 0; i < 7; i++) {
+                const dt = new Date(baseDate);
+                dt.setDate(dt.getDate() - (6 - i));
+                const iso = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+                const prof = sampleProfiles[i];
+
+                const dayObj = createBlankDayData();
+                dayObj.niyyah = 'আল্লাহর সন্তুষ্টির জন্য প্রতিটি কাজ সুন্দরভাবে সম্পন্ন করা';
+                
+                const farzIds = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+                farzIds.forEach((id, idx) => {
+                    const isDone = idx < prof.farz;
+                    dayObj.prayers[id] = { done: isDone, jamat: isDone, sunnah: idx % 2 === 0 };
+                });
+                dayObj.prayers['tahajjud'] = { done: prof.tahajjud, jamat: prof.tahajjud, sunnah: prof.tahajjud };
+
+                dayObj.quran = 'সূরা মুলক ও ১ রুকু তিলাওয়াত';
+                dayObj.azkar = 'সকাল ও সন্ধ্যার মাসনুন দোয়া';
+                dayObj.hadith = 'রিয়াদুস সালেহীন - ২টি হাদিস';
+
+                dayObj.priorities = [
+                    { text: 'প্রধান প্রজেক্ট বা পড়াশোনার টার্গেট শেষ করা', done: true },
+                    { text: '৫ ওয়াক্ত নামাজ ও তাহাজ্জুদ সময়মতো আদায়', done: prof.farz === 5 },
+                    { text: 'শারীরিক ব্যায়াম ও পরিবারকে সময় দেওয়া', done: i % 2 === 0 }
+                ];
+
+                const sampleTasks = [
+                    { text: 'সকালের পড়াশোনা / ডিপ ওয়ার্ক সেশন (২ ঘণ্টা)', tag: 'পড়াশোনা' },
+                    { text: 'কুরআন তিলাওয়াত ও অর্থ অনুধাবন', tag: 'ইবাদত' },
+                    { text: 'অফিস বা ভার্সিটির অ্যাসাইনমেন্ট সম্পন্ন', tag: 'কাজ' },
+                    { text: 'জরুরি ইমেইল ও মেসেজের রিপ্লাই দেওয়া', tag: 'কাজ' },
+                    { text: 'বিকালে ৩০ মিনিট হাঁটাহাঁটি ও ব্যায়াম', tag: 'ব্যক্তিগত' },
+                    { text: 'আগামীকালের কাজের তালিকা প্রস্তুতি', tag: 'ব্যক্তিগত' }
+                ];
+
+                dayObj.todos = sampleTasks.slice(0, prof.todosTotal).map((t, idx) => ({
+                    id: Date.now() + idx,
+                    text: t.text,
+                    tag: t.tag,
+                    done: idx < prof.todosDone
+                }));
+
+                dayObj.waterGlasses = prof.water;
+                dayObj.exerciseDone = true;
+                dayObj.exerciseNote = '৩০ মিনিট হাঁটা';
+                dayObj.studyDone = true;
+                dayObj.studyNote = 'নতুন স্কিল চর্চা';
+
+                dayObj.expenses = [
+                    { id: 1, item: 'যাতায়াত ও নাস্তা', amount: String(Math.round(prof.exp * 0.45)) },
+                    { id: 2, item: 'দুপুরের খাবার / বাজার', amount: String(Math.round(prof.exp * 0.55)) },
+                    { id: 3, item: '', amount: '' }
+                ];
+
+                localStorage.setItem(STORAGE_PREFIX + iso, JSON.stringify(dayObj));
+            }
+
+            currentDayData = loadDayData(currentDateStr);
+            renderFullPlannerPage();
+            switchMainTab('graphs');
+            showToast('গত ৭ দিনের নমুনা ডাটা ও গ্রাফ লোড হয়েছে!');
+        }
+
+        function openResetModal() {
+            document.getElementById('resetModalDate').textContent = currentDateStr;
+            document.getElementById('resetModal').classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            document.getElementById('resetModal').classList.add('hidden');
+        }
+
+        function confirmClearCurrentDay() {
+            localStorage.removeItem(STORAGE_PREFIX + currentDateStr);
+            currentDayData = createBlankDayData();
+            renderFullPlannerPage();
+            closeResetModal();
+            showToast('এই দিনের পেজটি একদম ফাঁকা করা হয়েছে');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        // Initialize App on Load
+        window.onload = function () {
+            setDate(currentDateStr);
+        };
+    </script>
+</body>
+</html>
